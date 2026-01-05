@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Security Monitor dashboard collector periodically
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=5s
+Unit=security-monitor-collector.service
+
+[Install]
+WantedBy=timers.target

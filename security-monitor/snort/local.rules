@@ -1,0 +1,165 @@
+# Snort自定义规则文件
+# 基于Kali的Web安全监控系统 - 入侵检测规则
+# 文件路径: /etc/snort/rules/local.rules
+
+# ============================================
+# SQL注入检测规则
+# ============================================
+
+# 检测UNION SELECT注入
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"SQL注入尝试 - UNION SELECT"; content:"UNION"; nocase; content:"SELECT"; nocase; pcre:"/UNION\s+SELECT/i"; sid:1000001; rev:1;)
+
+# 检测OR 1=1注入
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"SQL注入尝试 - OR 1=1"; content:"OR"; nocase; content:"1=1"; nocase; sid:1000002; rev:1;)
+
+# 检测单引号注入
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"SQL注入尝试 - 单引号"; content:"'"; pcre:"/'\s*(OR|AND)\s*1\s*=\s*1/i"; sid:1000003; rev:1;)
+
+# 检测注释符注入
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"SQL注入尝试 - 注释符"; content:"--"; pcre:/--\s*$/; sid:1000004; rev:1;)
+
+# 检测DROP TABLE注入
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"SQL注入尝试 - DROP TABLE"; content:"DROP"; nocase; content:"TABLE"; nocase; sid:1000005; rev:1;)
+
+# ============================================
+# XSS攻击检测规则
+# ============================================
+
+# 检测<script>标签
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"XSS攻击尝试 - script标签"; content:"<script"; nocase; sid:1000010; rev:1;)
+
+# 检测javascript:协议
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"XSS攻击尝试 - javascript协议"; content:"javascript:"; nocase; sid:1000011; rev:1;)
+
+# 检测onerror事件
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"XSS攻击尝试 - onerror事件"; content:"onerror"; nocase; sid:1000012; rev:1;)
+
+# 检测onload事件
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"XSS攻击尝试 - onload事件"; content:"onload"; nocase; sid:1000013; rev:1;)
+
+# 检测eval函数
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"XSS攻击尝试 - eval函数"; content:"eval("; nocase; sid:1000014; rev:1;)
+
+# ============================================
+# SSH暴力破解检测规则
+# ============================================
+
+# 检测SSH登录失败
+alert tcp $EXTERNAL_NET any -> $HOME_NET 22 (msg:"SSH暴力破解尝试 - 登录失败"; flow:established,to_server; content:"Failed password"; nocase; threshold:type both, track by_src, count 3, seconds 60; sid:1000020; rev:1;)
+
+# 检测SSH用户名枚举
+alert tcp $EXTERNAL_NET any -> $HOME_NET 22 (msg:"SSH暴力破解尝试 - 用户名枚举"; flow:established,to_server; content:"invalid user"; nocase; threshold:type both, track by_src, count 5, seconds 60; sid:1000021; rev:1;)
+
+# 检测SSH频繁连接
+alert tcp $EXTERNAL_NET any -> $HOME_NET 22 (msg:"SSH暴力破解尝试 - 频繁连接"; flow:established,to_server; threshold:type threshold, track by_src, count 10, seconds 60; sid:1000022; rev:1;)
+
+# ============================================
+# 端口扫描检测规则
+# ============================================
+
+# 检测SYN扫描
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"端口扫描 - SYN扫描"; flags:S; threshold:type both, track by_src, count 10, seconds 5; sid:1000030; rev:1;)
+
+# 检测NULL扫描
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"端口扫描 - NULL扫描"; flags:0; threshold:type both, track by_src, count 5, seconds 5; sid:1000031; rev:1;)
+
+# 检测FIN扫描
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"端口扫描 - FIN扫描"; flags:F; threshold:type both, track by_src, count 5, seconds 5; sid:1000032; rev:1;)
+
+# 检测XMAS扫描
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"端口扫描 - XMAS扫描"; flags:FPU; threshold:type both, track by_src, count 5, seconds 5; sid:1000033; rev:1;)
+
+# ============================================
+# ICMP攻击检测规则
+# ============================================
+
+# 检测ICMP Flood
+alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"ICMP Flood攻击"; itype:8; threshold:type both, track by_src, count 100, seconds 1; sid:1000040; rev:1;)
+
+# 检测ICMP Smurf攻击
+alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"ICMP Smurf攻击"; itype:8; threshold:type both, track by_dst, count 50, seconds 1; sid:1000041; rev:1;)
+
+# 检测ICMP重定向攻击
+alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"ICMP重定向攻击"; itype:5; sid:1000042; rev:1;)
+
+# ============================================
+# Web攻击检测规则
+# ============================================
+
+# 检测目录遍历攻击
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"Web攻击 - 目录遍历"; content:"../"; pcre:/\.\.\//; sid:1000050; rev:1;)
+
+# 检测命令注入攻击
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"Web攻击 - 命令注入"; content:";"; pcre:/;\s*(ls|cat|whoami|id|pwd)/i; sid:1000051; rev:1;)
+
+# 检测文件包含攻击
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"Web攻击 - 文件包含"; content:"php://"; nocase; sid:1000052; rev:1;)
+
+# 检测恶意User-Agent
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"Web攻击 - 恶意User-Agent"; content:"User-Agent:"; content:"sqlmap"; nocase; sid:1000053; rev:1;)
+
+# 检测Nmap扫描
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"Web攻击 - Nmap扫描"; content:"User-Agent:"; content:"Nmap"; nocase; sid:1000054; rev:1;)
+
+# ============================================
+# DDoS攻击检测规则
+# ============================================
+
+# 检测HTTP Flood
+alert tcp $EXTERNAL_NET any -> $HOME_NET 80 (msg:"DDoS攻击 - HTTP Flood"; flow:established,to_server; threshold:type both, track by_src, count 100, seconds 10; sid:1000060; rev:1;)
+
+# 检测SYN Flood
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"DDoS攻击 - SYN Flood"; flags:S; threshold:type both, track by_dst, count 200, seconds 5; sid:1000061; rev:1;)
+
+# 检测UDP Flood
+alert udp $EXTERNAL_NET any -> $HOME_NET any (msg:"DDoS攻击 - UDP Flood"; threshold:type both, track by_dst, count 500, seconds 5; sid:1000062; rev:1;)
+
+# ============================================
+# 恶意软件检测规则
+# ============================================
+
+# 检测木马连接
+alert tcp $HOME_NET any -> $EXTERNAL_NET 6667 (msg:"恶意软件 - IRC木马连接"; flow:established,to_server; content:"PRIVMSG"; sid:1000070; rev:1;)
+
+# 检测后门连接
+alert tcp $HOME_NET any -> $EXTERNAL_NET 31337 (msg:"恶意软件 - 后门连接"; flow:established,to_server; sid:1000071; rev:1;)
+
+# 检测可疑DNS查询
+alert udp $HOME_NET any -> $EXTERNAL_NET 53 (msg:"恶意软件 - 可疑DNS查询"; content:".tk"; content:".cf"; sid:1000072; rev:1;)
+
+# ============================================
+# VPN和隧道检测规则
+# ============================================
+
+# 检测SSH隧道
+alert tcp $HOME_NET any -> $EXTERNAL_NET 22 (msg:"隧道检测 - SSH隧道"; flow:established; threshold:type both, track by_dst, count 1000, seconds 60; sid:1000080; rev:1;)
+
+# 检测DNS隧道
+alert udp $HOME_NET any -> $EXTERNAL_NET 53 (msg:"隧道检测 - DNS隧道"; threshold:type both, track by_dst, count 100, seconds 10; sid:1000081; rev:1;)
+
+# ============================================
+# 数据泄露检测规则
+# ============================================
+
+# 检测信用卡号泄露
+alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"数据泄露 - 信用卡号"; pcre:/\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3[0-9]{13}|(?:2131|1800)\d{11})\b/; sid:1000090; rev:1;)
+
+# 检测身份证号泄露
+alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"数据泄露 - 身份证号"; pcre:/\b[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]\b/; sid:1000091; rev:1;)
+
+# 检测敏感文件传输
+alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"数据泄露 - 敏感文件传输"; content:".sql"; content:".bak"; content:".db"; sid:1000092; rev:1;)
+
+# ============================================
+# 自定义规则说明
+# ============================================
+
+# SID范围: 1000001-1000999 (自定义规则)
+# 规则优先级: 
+#   1 - 高危
+#   2 - 中危
+#   3 - 低危
+
+# 规则更新日期: 2026-01-05
+# 规则版本: 1.0
+# 维护者: Web安全监控系统

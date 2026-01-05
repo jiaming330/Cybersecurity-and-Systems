@@ -1,0 +1,8 @@
+[Unit]
+Description=Security Monitor - Dashboard Snapshot Collector
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/collect_dashboard_data.sh
+User=root

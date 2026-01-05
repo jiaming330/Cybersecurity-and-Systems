@@ -1,0 +1,12 @@
+[Unit]
+Description=Security Monitor - Internal Network Monitor
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/internal_monitor.sh daemon
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target

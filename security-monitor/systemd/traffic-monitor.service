@@ -1,0 +1,12 @@
+[Unit]
+Description=Security Monitor - Network Traffic Monitor
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/traffic_monitor.sh daemon
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target
